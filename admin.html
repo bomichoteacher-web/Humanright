@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>기본권 리듬게임 — 관리자</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#07070f;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#ddd;padding:24px 16px;}
+    h1{font-size:18px;font-weight:500;color:#eee;margin-bottom:4px;}
+    .sub{font-size:12px;color:#444;margin-bottom:20px;}
+    #login-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:12px;}
+    .login-box{background:#111122;border:0.5px solid #222244;border-radius:12px;padding:32px;width:100%;max-width:320px;display:flex;flex-direction:column;gap:12px;align-items:center;}
+    .login-title{font-size:16px;font-weight:500;color:#eee;}
+    .login-sub{font-size:12px;color:#555;text-align:center;}
+    input,select{background:#0d0d1a;border:1px solid #2a2a4a;border-radius:8px;padding:10px 14px;color:#eee;font-size:14px;outline:none;width:100%;}
+    input[type=password]{text-align:center;letter-spacing:4px;}
+    input:focus,select:focus{border-color:#7F77DD;}
+    select{cursor:pointer;}
+    .btn{padding:10px 24px;background:transparent;border:1.5px solid #444;border-radius:8px;color:#ccc;font-size:13px;cursor:pointer;}
+    .btn:hover{border-color:#888;}
+    .btn.accent{border-color:#7F77DD;color:#afa9ec;}
+    .btn.accent:hover{background:rgba(127,119,221,0.1);}
+    .btn.danger{border-color:#e87777;color:#e87777;}
+    .btn.danger:hover{background:rgba(232,119,119,0.1);}
+    #admin-wrap{display:none;max-width:800px;margin:0 auto;}
+    .toprow{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap;gap:8px;}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+    .stat-card{background:#111122;border:0.5px solid #222244;border-radius:8px;padding:12px 16px;}
+    .stat-label{font-size:10px;color:#555;letter-spacing:1px;margin-bottom:4px;}
+    .stat-val{font-size:22px;font-weight:500;color:#eee;}
+    .filter-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+    .filter-label{font-size:12px;color:#555;white-space:nowrap;}
+    .filter-select{width:auto;min-width:120px;}
+    .table-wrap{background:#111122;border:0.5px solid #222244;border-radius:10px;overflow:hidden;margin-bottom:16px;overflow-x:auto;}
+    table{width:100%;border-collapse:collapse;font-size:13px;min-width:500px;}
+    thead tr{background:#0d0d1a;border-bottom:1px solid #222244;}
+    th{padding:10px 14px;text-align:left;font-size:10px;color:#555;letter-spacing:1px;font-weight:500;}
+    td{padding:10px 14px;border-bottom:0.5px solid #1a1a2e;color:#ccc;}
+    tr:last-child td{border-bottom:none;}
+    tr:hover td{background:rgba(127,119,221,0.04);}
+    .rank-badge{display:inline-block;width:22px;height:22px;border-radius:4px;font-size:11px;font-weight:500;text-align:center;line-height:22px;}
+    .r1{background:rgba(255,221,87,0.15);color:#ffdd57;}
+    .r2{background:rgba(200,200,200,0.1);color:#ccc;}
+    .r3{background:rgba(205,127,50,0.15);color:#cd7f32;}
+    .rn{background:#1a1a2e;color:#555;}
+    .score-col{color:#afa9ec;font-weight:500;}
+    .combo-col{color:#FAC775;}
+    .chip{display:inline-block;font-size:10px;padding:2px 7px;border-radius:12px;background:rgba(127,119,221,0.12);color:#afa9ec;border:0.5px solid #534AB7;}
+    .chip.school{background:rgba(29,158,117,0.12);color:#9FE1CB;border-color:#1D9E75;}
+    .empty{text-align:center;padding:32px;color:#333;font-size:13px;}
+    #reset-confirm{display:none;background:#1a0d0d;border:1px solid #e87777;border-radius:8px;padding:14px;margin-bottom:12px;font-size:13px;color:#e8a0a0;line-height:1.6;}
+    #login-err{font-size:11px;color:#e87777;min-height:14px;}
+    .btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+  </style>
+</head>
+<body>
+
+<div id="login-wrap">
+  <div class="login-box">
+    <div class="login-title">관리자 로그인</div>
+    <div class="login-sub">기본권 리듬게임<br>학생 점수 관리 페이지</div>
+    <input type="password" id="pw-input" placeholder="비밀번호 입력"/>
+    <button class="btn accent" onclick="tryLogin()" style="width:100%;">로그인</button>
+    <div id="login-err"></div>
+  </div>
+</div>
+
+<div id="admin-wrap">
+  <div class="toprow">
+    <div>
+      <h1>기본권 리듬게임 관리자</h1>
+      <div class="sub">학교 · 반별 학생 점수 현황</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="loadData()">새로고침</button>
+      <button class="btn danger" onclick="showResetConfirm()">점수 초기화</button>
+      <button class="btn" onclick="logout()">로그아웃</button>
+    </div>
+  </div>
+
+  <div id="reset-confirm">
+    ⚠️ <span id="reset-label"></span> 점수가 모두 삭제돼요. 정말 초기화할까요?
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn danger" style="width:auto;padding:6px 16px;" onclick="resetAll()">네, 초기화할게요</button>
+      <button class="btn" style="width:auto;padding:6px 16px;" onclick="hideResetConfirm()">취소</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card"><div class="stat-label">총 플레이 수</div><div class="stat-val" id="s-total">-</div></div>
+    <div class="stat-card"><div class="stat-label">최고 점수</div><div class="stat-val" id="s-top">-</div></div>
+    <div class="stat-card"><div class="stat-label">평균 점수</div><div class="stat-val" id="s-avg">-</div></div>
+  </div>
+
+  <div class="filter-row">
+    <span class="filter-label">학교:</span>
+    <select class="filter-select" id="school-filter" onchange="onSchoolFilter()">
+      <option value="all">전체</option>
+    </select>
+    <span class="filter-label">반:</span>
+    <select class="filter-select" id="class-filter" onchange="filterData()">
+      <option value="all">전체</option>
+    </select>
+    <span style="font-size:11px;color:#444;" id="filter-count"></span>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>순위</th><th>이름</th><th>학교</th><th>반</th><th>점수</th><th>최대콤보</th><th>날짜</th>
+        </tr>
+      </thead>
+      <tbody id="rank-body">
+        <tr><td colspan="7" class="empty">불러오는 중...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getFirestore, collection, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+const firebaseConfig={apiKey:"AIzaSyDEJa9JE5_UE-GjdJvfd03K7GA8rbYUDIA",authDomain:"humanright-game.firebaseapp.com",projectId:"humanright-game",storageBucket:"humanright-game.firebasestorage.app",messagingSenderId:"958967423997",appId:"1:958967423997:web:22fec37e235309f5adaf94"};
+const app=initializeApp(firebaseConfig);const db=getFirestore(app);
+window._db=db;window._col=collection;window._getDocs=getDocs;window._deleteDoc=deleteDoc;window._doc=doc;window._query=query;window._orderBy=orderBy;window._dbReady=true;
+</script>
+
+<script>
+const ADMIN_PW='teacher1234';
+let allEntries=[];
+
+function tryLogin(){
+  const pw=document.getElementById('pw-input').value;
+  if(pw===ADMIN_PW){document.getElementById('login-wrap').style.display='none';document.getElementById('admin-wrap').style.display='block';loadData();}
+  else{document.getElementById('login-err').textContent='비밀번호가 틀렸어요.';document.getElementById('pw-input').value='';}
+}
+function logout(){document.getElementById('login-wrap').style.display='flex';document.getElementById('admin-wrap').style.display='none';document.getElementById('pw-input').value='';}
+
+async function loadData(){
+  const body=document.getElementById('rank-body');
+  body.innerHTML='<tr><td colspan="7" class="empty">불러오는 중...</td></tr>';
+  try{
+    const q=window._query(window._col(window._db,'ranking'),window._orderBy('score','desc'));
+    const snap=await window._getDocs(q);
+    allEntries=[];snap.forEach(d=>allEntries.push({id:d.id,...d.data()}));
+
+    const schools=[...new Set(allEntries.map(e=>e.school||'미입력'))].sort();
+    const schoolSel=document.getElementById('school-filter');
+    schoolSel.innerHTML='<option value="all">전체</option>';
+    schools.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;schoolSel.appendChild(o);});
+
+    filterData();
+  }catch(err){body.innerHTML=`<tr><td colspan="7" class="empty">오류: ${err.message}</td></tr>`;}
+}
+
+function onSchoolFilter(){
+  const school=document.getElementById('school-filter').value;
+  const classes=[...new Set(allEntries.filter(e=>school==='all'||(e.school||'미입력')===school).map(e=>e.classCode||'미입력'))].sort();
+  const classSel=document.getElementById('class-filter');
+  classSel.innerHTML='<option value="all">전체</option>';
+  classes.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;classSel.appendChild(o);});
+  filterData();
+}
+
+function filterData(){
+  const school=document.getElementById('school-filter').value;
+  const cls=document.getElementById('class-filter').value;
+  let filtered=allEntries;
+  if(school!=='all')filtered=filtered.filter(e=>(e.school||'미입력')===school);
+  if(cls!=='all')filtered=filtered.filter(e=>(e.classCode||'미입력')===cls);
+  filtered.sort((a,b)=>b.score-a.score);
+
+  document.getElementById('s-total').textContent=filtered.length;
+  if(filtered.length>0){
+    document.getElementById('s-top').textContent=filtered[0].score.toLocaleString();
+    document.getElementById('s-avg').textContent=Math.round(filtered.reduce((a,e)=>a+e.score,0)/filtered.length).toLocaleString();
+  } else {document.getElementById('s-top').textContent='-';document.getElementById('s-avg').textContent='-';}
+  document.getElementById('filter-count').textContent=filtered.length+'명';
+
+  const body=document.getElementById('rank-body');
+  if(!filtered.length){body.innerHTML='<tr><td colspan="7" class="empty">기록이 없어요</td></tr>';return;}
+  body.innerHTML='';
+  filtered.forEach((e,i)=>{
+    const bc=i===0?'r1':i===1?'r2':i===2?'r3':'rn';
+    const bt=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><span class="rank-badge ${bc}">${bt}</span></td><td>${e.name}</td><td><span class="chip school">${e.school||'미입력'}</span></td><td><span class="chip">${e.classCode||'미입력'}</span></td><td class="score-col">${e.score.toLocaleString()}</td><td class="combo-col">x${e.combo}</td><td>${e.date||'-'}</td>`;
+    body.appendChild(tr);
+  });
+}
+
+function showResetConfirm(){
+  const school=document.getElementById('school-filter').value;
+  const cls=document.getElementById('class-filter').value;
+  let label=school==='all'?'전체':school;
+  if(cls!=='all')label+=' · '+cls+' 반';
+  document.getElementById('reset-label').textContent='['+label+']의';
+  document.getElementById('reset-confirm').style.display='block';
+}
+function hideResetConfirm(){document.getElementById('reset-confirm').style.display='none';}
+
+async function resetAll(){
+  hideResetConfirm();
+  const school=document.getElementById('school-filter').value;
+  const cls=document.getElementById('class-filter').value;
+  let toDelete=allEntries;
+  if(school!=='all')toDelete=toDelete.filter(e=>(e.school||'미입력')===school);
+  if(cls!=='all')toDelete=toDelete.filter(e=>(e.classCode||'미입력')===cls);
+  const body=document.getElementById('rank-body');
+  body.innerHTML='<tr><td colspan="7" class="empty">삭제 중...</td></tr>';
+  try{
+    await Promise.all(toDelete.map(e=>window._deleteDoc(window._doc(window._db,'ranking',e.id))));
+    await loadData();
+  }catch(err){body.innerHTML=`<tr><td colspan="7" class="empty">오류: ${err.message}</td></tr>`;}
+}
+
+document.getElementById('pw-input').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin();});
+</script>
+</body>
+</html>
